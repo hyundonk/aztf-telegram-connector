@@ -1,0 +1,168 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "customapi_name": {
+            "type": "String"
+        },
+        "icon_uri": {
+            "type": "String"
+        },
+        "function_hostname": {
+            "type": "String"
+        },
+        "location": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/customApis",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('customapi_name')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "connectionParameters": {
+                    "api_key": {
+                        "type": "securestring",
+                        "uiDefinition": {
+                            "displayName": "API Key",
+                            "description": "The API Key for this api",
+                            "tooltip": "Provide your API Key",
+                            "constraints": {
+                                "tabIndex": 2,
+                                "clearText": false,
+                                "required": "true"
+                            }
+                        }
+                    }
+                },
+                "description": "[parameters('customapi_name')]",
+                "displayName": "[parameters('customapi_name')]",
+                "iconUri": "[parameters('icon_uri')]",
+                "apiType": "Rest",
+                "backendService": {
+                  "serviceUrl": "[concat('https://', parameters('function_hostname'), '/')]"
+                },
+                "swagger": {
+                  "swagger": "2.0",
+                  "info": {
+                    "title": "Default title",
+                    "description": "Telegram",
+                    "version": "1.0"
+                  },
+                  "host": "[parameters('function_hostname')]",
+                  "basePath": "/",
+                  "schemes": [
+                    "https"
+                  ],
+                  "consumes": [],
+                  "produces": [],
+                  "paths": {
+                    "/bot{botkey}/sendmesage": {},
+                    "/bot{username}/sendmesage": {},
+                    "/bot{botKey}/sendmesage": {},
+                    "/bot{botKey}/sendmessage": {},
+                    "/bot{botKey}/getUpdates": {},
+                    "/sendMessage": {
+                      "get": {
+                        "responses": {
+                          "default": {
+                            "description": "default",
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "parameters": [
+                        {
+                          "name": "text",
+                          "in": "query",
+                          "required": true,
+                          "type": "string",
+                          "x-ms-summary": "Text",
+                          "description": "Text to send to Telegram",
+                          "x-ms-visibility": "important"
+                        },
+                        {
+                          "name": "chat_id",
+                          "in": "query",
+                          "required": true,
+                          "type": "string",
+                          "x-ms-summary": "Chat Id",
+                          "description": "The chat id where this message is supposed to go",
+                          "x-ms-visibility": "important"
+                        }
+                        ],
+                        "summary": "Send Message",
+                        "description": "Send message with a bot to a group or personal chat",
+                        "operationId": "SendMessage"
+                      }
+                    },
+                    "/getUpdates": {
+                      "get": {
+                        "responses": {
+                          "default": {
+                            "description": "default",
+                            "schema": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "summary": "Get Updates",
+                        "description": "Get the new messages",
+                        "operationId": "GetUpdates",
+                        "parameters": [
+                        {
+                          "name": "limit",
+                          "in": "query",
+                          "required": false,
+                          "type": "string",
+                          "description": "Limits the number of updates to return",
+                          "x-ms-summary": "Limit"
+                        },
+                        {
+                          "name": "offset",
+                          "in": "query",
+                          "required": false,
+                          "type": "string",
+                          "x-ms-summary": "Offset",
+                          "description": "How many messages are retrieved from the past since last message, defaults to -1.",
+                          "default": "-1"
+                        }
+                        ]
+                      }
+                    }
+                  },
+                  "definitions": {},
+                  "parameters": {},
+                  "responses": {},
+                  "securityDefinitions": {
+                    "api_key": {
+                      "type": "apiKey",
+                      "in": "query",
+                      "name": "apikey"
+                    }
+                  },
+                  "security": [],
+                  "tags": []
+                } 
+            }
+        }
+    ],
+    "outputs": {
+      "connection_id": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.Web/connections', parameters('customapi_name'))]"
+      },
+      "customApi_id": {
+        "type": "string",
+        "value": "[resourceId('Microsoft.Web/customApis', parameters('customapi_name'))]"
+      },
+      "connector_name": {
+        "type": "string",
+        "value": "[parameters('customapi_name')]"
+      }
+    }
+}
