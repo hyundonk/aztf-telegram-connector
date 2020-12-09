@@ -43,21 +43,68 @@ When the module instance is created, the following output variable will be set.
 
 
 
-Below is sample terraform code creating above resources using "aztf-telegram-connector" module and configuring Azure Alert action group using the webhook URL from the module output.
+Below is sample terraform code creating above resources using this "aztf-telegram-connector" module and configuring Azure Alert action group using the webhook URL from the module output.
 
 ```
+# deploy aztf-telegram-connector with chat_id and api_key
+
 module "telegram-connector" {
-  source = "./aztf-telegram-connector"
+  source = "git://github.com/hyundonk/aztf-telegram-connector.git"
 
-  prefix                  = "deleteme"
+  prefix                  = "example"
 
-  resource_group_name     = local.MONITOR
-  location                = local.location_map["region1"]
-
-  telegram_chat_id        = var.telegram_chat_id
-  telegram_api_key        = var.telegram_api_key
+  resource_group_name     = "test-rg"
+  location                = "southeastasia"
+  
+  telegram_chat_id        = "{my-chat-id}"
+  telegram_api_key        = "{my-telegram-api-key}"
 }
 
+# deploy azure monitor action group using the webhook URL output from above module
+resource "azurerm_monitor_action_group" "example" {
+  name                    = "my test action group"
+
+  resource_group_name     = test-rg
+  short_name              = "mytestag"
+
+  webhook_receiver {
+    name                    = "webhook to telegram"
+    service_uri             = module.telegram-connector.logicApp_https_url
+    use_common_alert_schema = false
+  }
+}
+
+# configure alert rule with the action group above. In this example, it uses log analytics log query result to send alert with the results when the number of query result is more than 0.
+
+resource "azurerm_monitor_scheduled_query_rules_alert" "example" {
+  name                = "my alert"
+
+  resource_group_name     = "test-rg"
+  location                = "southeastasia"
+
+  action {
+    action_group           = [azurerm_monitor_action_group.example.id]
+    custom_webhook_payload = "{\"alertname\":\"#alertrulename\", \"IncludeSearchResults\":true}"
+  }
+
+  data_source_id = "/subscriptions/{my-subscription-id}/resourcegroups/{log-analytics-resource-group-name}/providers/microsoft.operationalinsights/workspaces/{log-analytics-name}"
+ 
+  description    = "Alert when total results cross threshold"
+  enabled        = true
+
+  # Count all requests with server error result code grouped into 5-minute bins
+  query       = <<-QUERY
+  SigninLogs
+  QUERY
+
+  severity    = 2
+  frequency   = 5
+  time_window = 5
+  trigger {
+    operator  = "GreaterThan"
+    threshold = 0
+  }
+}
 ```
 
 
