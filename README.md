@@ -2,15 +2,19 @@
 
 Azure Monitor supports "Webhook" action type to send alert to specified webhook URL. For example, Slack webhook URL can be added to to a "Webhook" action group to send Azure alerts to slack users. 
 
-However, Azure Alert doesn't support Telegram webhook format. Azure Alert webhook doesn't support custom JSON-based webhook whereas Telegram webhook requires custom format which requires both "chat_id" and "text" field are required as below.
+However, Azure Alert doesn't support custom JSON-based webhook whereas Telegram webhook requires custom format which requires both "chat_id" and "text" field are required as below.
 
 ```
 https://api.telegram.org/bot<botKey_here>/sendMessage?text=<text_here>&chat_id=<id_here>
 ```
 
-In "aztf-telegram-connector" terraform module, it creates a Azure Logic App workflow to provide webhook URL. The Logic App workflow then calls Azure Function Proxy which converts the webhook call from Azure Monitor Alert to the webhook format that Telegram supports. The overall diagram is as below.
+
+
+To address this issue, in this "aztf-telegram-connector" terraform module, Azure Logic App and Azure Function is used to convert Azure Alert webhook format to custom webhook format that Telegram requires. This module creates a Azure Logic App workflow to provide webhook URL. The Logic App workflow then calls Azure Function Proxy which converts the webhook call from Azure Monitor Alert to the webhook format that Telegram supports. The overall diagram is as below.
 
  ![img](https://documents.lucid.app/documents/6037081b-26b2-46a5-883d-79939c763204/pages/0_0?a=208&x=113&y=155&w=1034&h=330&store=1&accept=image%2F*&auth=LCA%20d784ec19b10a4f574abc3eba9004ac099015f67c-ts%3D1607512170)
+
+
 
 This "aztf-telegram-connector" module created below resources in the specified resource group. 
 
@@ -109,58 +113,51 @@ resource "azurerm_monitor_scheduled_query_rules_alert" "example" {
 
 
 
+To use Telegram, you need to create a Telegram bot and a channel which gives you a channel ID and API key. (Refer [Create a bot for Telegram - Bot Service | Microsoft Docs](https://docs.microsoft.com/en-us/azure/bot-service/bot-service-channel-connect-telegram?view=azure-bot-service-4.0) for detail)
+
+First, create a **new Telegram bot**.
+
+![Create new bot](https://docs.microsoft.com/en-us/azure/bot-service/media/channels/tg-stepnewbot.png?view=azure-bot-service-4.0)
+
+Then, you can get **telegram API key** which is the token to be used with HTTP API in the screenshot below.
+
+![Copy access token](https://docs.microsoft.com/en-us/azure/bot-service/media/channels/tg-stepbotcreated.png?view=azure-bot-service-4.0)
+
+To get "chat_id", access below URL in a web browser with the access token in the URL. Then you can get channel ID for example "1122334455" as below result.
+
+```
+https://api.telegram.org/bot183547168:AAHB5Ne2yzV5qfOvgAAgW0DHWRG0OiQLDEg/getUpdates
+```
+
+```
+{"ok":true,"result":[{"update_id":123456789,
+"message":{"message_id":130,"from":{"id":1122334455,"is_bot":false,"first_name":"myName","last_name":"Kim","username":"myusename","language_code":"en"},... "date":1607524265,"text":"hi"}}]}
+```
 
 
 
+References]
 
-
-
-
-
-
-
-- Telegram Logic App Connector
-https://github.com/foppenm/TelegramLogicAppConnector
 https://www.re-mark-able.net/sending-telegram-messages-azure-function-proxy-and-logic-app/
+
 https://core.telegram.org/bots/api
-https://medium.com/@sean_bradley/get-telegram-chat-id-80b575520659
+
 https://acidpop.tistory.com/216
-https://acidpop.tistory.com/284
-https://wk0.medium.com/send-and-receive-messages-with-the-telegram-api-17de9102ab78
 
-
-- Azure Template format for Microsoft.Web/customApis and Microsoft.Web/connections
 https://docs.microsoft.com/en-us/azure/templates/microsoft.web/customapis#ApiResourceDefinitions
+
 https://docs.microsoft.com/en-us/azure/templates/microsoft.web/connections
 
-- Create a custom connector for Logic Apps
 https://docs.microsoft.com/en-us/connectors/custom-connectors/create-logic-apps-connector
-https://docs.microsoft.com/en-us/connectors/custom-connectors/define-blank
-https://mikaelsand.se/2020/11/how-to-use-logic-apps-custom-connectors-with-arm-and-ci-cd/
-https://social.msdn.microsoft.com/Forums/en-US/016d8890-b7cc-408f-983c-b942cbc613ef/how-to-deploy-logic-app-custom-connector?forum=azurelogicapps
 
-- Azure Function CI/CD
-https://docs.microsoft.com/en-us/azure/azure-functions/functions-continuous-deployment
-https://adrianhall.github.io/typescript/2019/10/23/terraform-functions/
-https://docs.microsoft.com/en-us/azure/azure-functions/deployment-zip-push
+https://mikaelsand.se/2020/11/how-to-use-logic-apps-custom-connectors-with-arm-and-ci-cd/
+
 https://medium.com/@bappertdennis/deploy-azure-functions-with-terraform-83ab88c8373c
 
-- Azure Function Proxies
 https://docs.microsoft.com/en-us/azure/azure-functions/functions-proxies
-https://github.com/mattchenderson/azure-functions-proxies-intro/blob/master/README.md
-https://chsakell.com/2019/02/03/azure-functions-proxies-in-action/
-https://docs.microsoft.com/en-us/azure/azure-functions/functions-app-settings
 
-- Logic App Deployment with ARM template
 https://docs.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-definition-language
-https://www.nuomiphp.com/eplan/en/136757.html
-https://yourazurecoach.com/2018/03/15/get-request-url-after-logic-apps-deployment/
-https://mindbyte.nl/2019/02/13/Retrieve-the-callback-url-of-a-logic-app-inside-your-ARM-template.html
 
-terraform "templatefile" function. reads the file at the given path and renders its content as a template using a supplied set of template variables.
-https://www.terraform.io/docs/configuration/functions/templatefile.html?_ga=2.114735303.1314921877.1606987310-257165690.1602728845
-
-Azure Alert
 https://docs.microsoft.com/en-us/azure/logic-apps/monitor-logic-apps#review-trigger-history
 
 
