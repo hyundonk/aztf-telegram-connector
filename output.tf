@@ -23,3 +23,7 @@ output "customConnector_name" {
 output "logicApp_https_url" {
   value = azurerm_template_deployment.logicapp_workflow.outputs.logicAppUrl
 }
+
+output "function_app_possible_outbound_ip_addresses" {
+  value = azurerm_function_app.example.possible_outbound_ip_addresses
+}
