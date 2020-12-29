@@ -1,29 +1,14 @@
 # Deploying HTTP webhook API with Logic App and Azure Telegram Connector with Terraform
 
-Azure Monitor supports "Webhook" action type to send alert to specified webhook URL. For example, Slack webhook URL can be added to to a "Webhook" action group to send Azure alerts to slack users. 
-
-However, Azure Alert doesn't support custom JSON-based webhook whereas Telegram webhook requires custom format which requires both "chat_id" and "text" field are required as below.
-
-```
-https://api.telegram.org/bot<botKey_here>/sendMessage?text=<text_here>&chat_id=<id_here>
-```
 
 
-
-To address this issue, in this "aztf-telegram-connector" terraform module, Azure Logic App and Azure Function is used to convert Azure Alert webhook format to custom webhook format that Telegram requires. This module creates a Azure Logic App workflow to provide webhook URL. The Logic App workflow then calls Azure Function Proxy which converts the webhook call from Azure Monitor Alert to the webhook format that Telegram supports. The overall diagram is as below.
-
- ![img](https://documents.lucid.app/documents/6037081b-26b2-46a5-883d-79939c763204/pages/0_0?a=208&x=113&y=155&w=1034&h=330&store=1&accept=image%2F*&auth=LCA%20d784ec19b10a4f574abc3eba9004ac099015f67c-ts%3D1607512170)
-
-
+v2 implementation of this module deploys only Azure logic app workflow and a logic app custom connector for telegram.
 
 This "aztf-telegram-connector" module created below resources in the specified resource group. 
 
 - A Logic App workflow
 - A (Logic App) Custom connector (for Telegram)
 - A (Logic App) API connector which binds between the workflow and custom connector
-- An App Service Plan for Azure Function (consumption model)
-- A Function App with proxies.json to provide proxy functionality without any custom function code
-- A storage account that the function app package will be uploaded. This function app package will be used to deploy the function app.
 
 
 
@@ -37,7 +22,7 @@ The required input variables for this module are:
 
 - "telegram_chat_id": Telegram "chat_id" to which the alert will be sent
 
-- "telegram_api_key": Telegram "api_key" to authenticate when sending message to the chat room.
+- "telegram_api_key": Telegram "api_key" to authenticate when sending message to the chat room. (bot_key)
 
   
 
@@ -133,6 +118,42 @@ https://api.telegram.org/bot183547168:AAHB5Ne2yzV5qfOvgAAgW0DHWRG0OiQLDEg/getUpd
 {"ok":true,"result":[{"update_id":123456789,
 "message":{"message_id":130,"from":{"id":1122334455,"is_bot":false,"first_name":"myName","last_name":"Kim","username":"myusename","language_code":"en"},... "date":1607524265,"text":"hi"}}]}
 ```
+
+ 
+
+
+
+
+
+-----------------------------------------------------------------------------
+
+Below describes v1 implementation which is obsolete currently.
+
+v1 uses Azure Function proxy which requires azure storage account created. When Storage Account is used in enterprise environment, it is advised to enable storage account network firewall to block un-restricted access. Also it is advised to use Azure Policy to reject creating storage account without "deny access" configuration enabled on the storage account. When storage account is used with Azure function, enabling "deny access" prevents azure function from accessing the storage account and it require vnet integration with enabling private endpoint on the storage account which is not preferable in the enterprise environment as it allows Azure PaaS service with public endpoint is accessing customer virtual network.  v2 implementation of this module removed dependency of azure function proxy and also storage account resulting more simpler implementation. 
+
+
+
+Azure Monitor supports "Webhook" action type to send alert to specified webhook URL. For example, Slack webhook URL can be added to to a "Webhook" action group to send Azure alerts to slack users. 
+
+However, Azure Alert doesn't support custom JSON-based webhook whereas Telegram webhook requires custom format which requires both "chat_id" and "text" field are required as below.
+
+```
+https://api.telegram.org/bot<botKey_here>/sendMessage?text=<text_here>&chat_id=<id_here>
+```
+
+
+
+To address this issue, in this "aztf-telegram-connector" terraform module, Azure Logic App and Azure Function is used to convert Azure Alert webhook format to custom webhook format that Telegram requires. This module creates a Azure Logic App workflow to provide webhook URL. The Logic App workflow then calls Azure Function Proxy which converts the webhook call from Azure Monitor Alert to the webhook format that Telegram supports. The overall diagram is as below.
+
+ ![img](https://documents.lucid.app/documents/6037081b-26b2-46a5-883d-79939c763204/pages/0_0?a=208&x=113&y=155&w=1034&h=330&store=1&accept=image%2F*&auth=LCA%20d784ec19b10a4f574abc3eba9004ac099015f67c-ts%3D1607512170)
+
+
+
+v1 creates the following additional resources compared with v2 implementation.
+
+- An App Service Plan for Azure Function (consumption model)
+- A Function App with proxies.json to provide proxy functionality without any custom function code
+- A storage account that the function app package will be uploaded. This function app package will be used to deploy the function app.
 
 
 
