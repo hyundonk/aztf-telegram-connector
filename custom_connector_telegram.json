@@ -8,7 +8,7 @@
         "icon_uri": {
             "type": "String"
         },
-        "function_hostname": {
+        "telegram_api_hostname": {
             "type": "String"
         },
         "location": {
@@ -43,7 +43,7 @@
                 "iconUri": "[parameters('icon_uri')]",
                 "apiType": "Rest",
                 "backendService": {
-                  "serviceUrl": "[concat('https://', parameters('function_hostname'), '/')]"
+                  "serviceUrl": "[concat('https://', parameters('telegram_api_hostname'), '/')]"
                 },
                 "swagger": {
                   "swagger": "2.0",
@@ -52,7 +52,7 @@
                     "description": "Telegram",
                     "version": "1.0"
                   },
-                  "host": "[parameters('function_hostname')]",
+                  "host": "[parameters('telegram_api_hostname')]",
                   "basePath": "/",
                   "schemes": [
                     "https"
@@ -60,12 +60,7 @@
                   "consumes": [],
                   "produces": [],
                   "paths": {
-                    "/bot{botkey}/sendmesage": {},
-                    "/bot{username}/sendmesage": {},
-                    "/bot{botKey}/sendmesage": {},
-                    "/bot{botKey}/sendmessage": {},
-                    "/bot{botKey}/getUpdates": {},
-                    "/sendMessage": {
+                    "/{botkey}/sendMessage": {
                       "get": {
                         "responses": {
                           "default": {
@@ -76,6 +71,15 @@
                           }
                         },
                         "parameters": [
+                        {
+                          "name": "botkey",
+                          "in": "path",
+                          "required": true,
+                          "type": "string",
+                          "x-ms-summary": "Text",
+                          "description": "botkey for telegram chat authentication",
+                          "x-ms-visibility": "important"
+                        },
                         {
                           "name": "text",
                           "in": "query",
